@@ -35,11 +35,26 @@
                 var content = "<h2>" + data.created + "</h2>" + data.html;
                 // See if there's a div to replace it in, or if we should add a new one
                 var existing = $("div[data-post-id=" + data.id + "]");
-                if (existing.length) {
-                    existing.html(content);
-                } else {
-                    var newdiv = $("<div class='post' data-post-id='" + data.id + "'>" + content + "</div>");
-                    $("#posts").prepend(newdiv);
+                var exists = existing.length;
+                switch(data.action){
+                    case 'save':
+                        if(exists){
+                            existing.html(content);
+                        }
+                        else {
+                            var newdiv = $("<div class='post' data-post-id='" + data.id + "'>" + content + "</div>");
+                            $("#posts").prepend(newdiv);
+                        }
+                        break;
+
+                    case 'delete':
+                        if(exists){
+                            existing.remove();
+                        }
+                        break;
+
+                    default:
+                        break;
                 }
             };
 

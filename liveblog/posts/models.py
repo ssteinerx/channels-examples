@@ -4,6 +4,9 @@ from django.template.defaultfilters import linebreaks_filter
 from django.utils.six import python_2_unicode_compatible
 from channels import Group
 
+# TODO: make enum for "action" param in send_notification()
+
+
 
 @python_2_unicode_compatible
 class Liveblog(models.Model):
@@ -71,7 +74,7 @@ class Post(models.Model):
         """
         return linebreaks_filter(self.body)
 
-    def send_notification(self):
+    def send_notification(self, action='save'):
         """
         Sends a notification to everyone in our Liveblog's group with our
         content.
@@ -80,6 +83,7 @@ class Post(models.Model):
         # to be simple types, which is why we handle the datetime here.
         notification = {
             "id": self.id,
+            "action": action,
             "html": self.html_body(),
             "created": self.created.strftime("%a %d %b %Y %H:%M"),
         }
@@ -97,5 +101,33 @@ class Post(models.Model):
         the biggest fan of signals.
         """
         result = super(Post, self).save(*args, **kwargs)
-        self.send_notification()
+        print("HEY, SAVING HERE")
+        self.send_notification('save')
         return result
+
+    # NOTE:
+    # NOTE: this won't work on bulk methods 'cause it won't get called
+    #       E.G. the admin backend won't call this!
+    #def delete(self, *args, **kwargs):
+     #   """
+     #   Hooking send_notification into the delete of the object as I'm not
+     #   the biggest fan of signals.
+     #   """
+     #   result = super(Post, self).delete(*args, **kwargs)
+     #   self.send_notification('delete')
+     #   print("REMOVED IT")
+     #   return result
+
+from django.dispatch import receiver
+from django.db.models.signals import post_delete, pre_delete
+
+@receiver(pre_delete, sender=Post)
+def delete_hook_pre(sender, **kwargs):
+    print("GOT PRE-DELETE")
+
+@receiver(post_delete, sender=Post)
+def delete_hook_post(sender, **kwargs):
+    print("GOT POST-DELETE")
+    kwargs['instance'].send_notification('delete')
+
+
