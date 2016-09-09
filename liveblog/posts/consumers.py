@@ -2,6 +2,48 @@ import json
 from channels import Group
 from .models import Liveblog
 
+from datetime import datetime
+from twisted.internet.task import LoopingCall
+
+def update_time(message):
+    print("Adding update_time group...", message.reply_channel)
+    Group('update_time').add(message.reply_channel)
+    maybe_start_looper()
+
+looper = None
+def maybe_start_looper():
+    global looper
+    if not looper:
+        looper = LoopingCall(send_message_update_time)
+        looper.start(1)
+        print("LoopingCall started...")
+
+def send_message_update_time():
+    # print("send_message_update_time")
+    """
+    Sends a notification to everyone in our update_time group with
+    the current datetime.
+    """
+    # Make the payload of the notification. We'll JSONify this, so it has
+    # to be simple types, which is why we handle the datetime here.
+    notification = {
+        "time": str(datetime.now())
+    }
+    print(notification)
+    # Encode and send that message to the whole channels Group for our
+    # time server. Note how you can send to a channel or Group from any part
+    # of Django, not just inside a consumer.
+    # WebSocket text frame, with JSON content
+    # Group('update_time').send({'pkt':pkt})
+    Group('update_time').send({
+        # WebSockets send either a text or binary payload each frame.
+        # We do JSON over the text portion.
+        "text": json.dumps(notification),
+    })
+    # {
+    #     "time_text": json.dumps(notification)
+    # })
+
 
 # The "slug" keyword argument here comes from the regex capture group in
 # routing.py.
@@ -13,6 +55,7 @@ def connect_blog(message, slug):
     The notifications are actually sent in the Post model on save.
     """
     # Try to fetch the liveblog by slug; if that fails, close the socket.
+    print("Trying to create channel for:", slug)
     try:
         liveblog = Liveblog.objects.get(slug=slug)
     except Liveblog.DoesNotExist:

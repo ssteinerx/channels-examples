@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'channels',
     'posts',
+    'django_extensions',
 ]
 
 MIDDLEWARE_CLASSES = [

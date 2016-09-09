@@ -6,8 +6,6 @@ from channels import Group
 
 # TODO: make enum for "action" param in send_notification()
 
-
-
 @python_2_unicode_compatible
 class Liveblog(models.Model):
     """

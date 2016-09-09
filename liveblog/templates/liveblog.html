@@ -4,6 +4,8 @@
 {% block header_text %}{{ liveblog.title }}{% endblock %}
 
 {% block content %}
+    <div id="time_channel_div">
+    </div>
 
     <div id="posts">
         {% for post in posts %}
@@ -56,6 +58,31 @@
                     default:
                         break;
                 }
+            };
+
+            // Helpful debugging
+            socket.onopen = function() { console.log("Connected to notification socket"); }
+            socket.onclose = function() { console.log("Disconnected to notification socket"); }
+        });
+
+        $(function () {
+            // TBD: factor out function
+            // Correctly decide between ws:// and wss://
+            var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+            var ws_path = ws_scheme + '://' + window.location.host +
+                            '/update_time/stream/';
+            console.log("Connecting to " + ws_path);
+            var socket = new ReconnectingWebSocket(ws_path);
+
+            // Handle incoming messages
+            socket.onmessage = function(message) {
+                // Decode the JSON
+                console.log("Got message " + message.data);
+                var data = JSON.parse(message.data);
+
+                // Create the inner content of the post div
+                var content = "<h1>" + data.time + "</h1>";
+                $("#time_channel_div").html(content);
             };
 
             // Helpful debugging
