@@ -4,9 +4,9 @@
 {% block header_text %}{{ liveblog.title }}{% endblock %}
 
 {% block content %}
-    <div id="time_channel_div">
-    </div>
-
+    <button class="post-button">POST</button>
+    <textarea class="content-post"></textarea>
+    <hr>
     <div id="posts">
         {% for post in posts %}
             <div class="post" data-post-id="{{ post.id }}">
@@ -59,6 +59,22 @@
                         break;
                 }
             };
+
+            // save blog post
+            $(".post-button").click(function(){
+                if($(".content-post").val() == "")
+                {
+                    alert("Empty text");
+                }
+                else
+                {
+                    var content = $(".content-post").val()
+                    socket.send(JSON.stringify({"post":content}));
+                    $(".content-post").val('');
+                }
+
+            });
+
 
             // Helpful debugging
             socket.onopen = function() { console.log("Connected to notification socket"); }
